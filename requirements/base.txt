@@ -1,0 +1,2 @@
+-r django.txt
+-r libraries.txt

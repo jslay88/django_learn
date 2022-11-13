@@ -1,0 +1,30 @@
+name: Create Release and Deploy
+# Build Python package for PyPi and GitGub release, and then publish a GitHub Release
+# Runs on semantic versioned tags only
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+
+jobs:
+  build:
+    name: Build
+    uses: ./.github/workflows/docker.yml
+  release:
+    runs-on: ubuntu-latest
+    name: Release
+    steps:
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+  deploy:
+    name: Deploy
+    needs: [build]
+    uses: ./.github/workflows/deploy.yml
+    with:
+      ENVIRONMENT: production
+      URL: django-learn.k8s.jslay.net
+    secrets:
+      TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
+      TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}

@@ -1,0 +1,42 @@
+version: "3.4"
+
+volumes:
+  db_data:
+
+services:
+  db:
+    image: postgres:alpine
+    user: postgres
+    restart: always
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+
+  app:
+    image: django_learn:dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    stdin_open: true
+    tty: true
+    environment:
+      DJANGO_SETTINGS_MODULE: django_learn.settings.dev_docker
+      PGDATABASE: postgres
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGHOST: db
+      PGPORT: 5432
+      RUN_MIGRATIONS: true
+      SECRET_KEY: abcdefghijklmnopqrstuvwxyz
+    ports:
+      - "8000:8000"
+    volumes: &python_volumes
+      - ./:/src/
+      - ./.env:/etc/profile.d/dev-env.sh

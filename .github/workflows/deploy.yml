@@ -1,0 +1,51 @@
+name: Deploy Helm Chart
+
+on:
+  workflow_call:
+    inputs:
+      ENVIRONMENT:
+        required: false
+        type: string
+        default: production
+      URL:
+        required: false
+        type: string
+        default: https://django-learn.k8s.jslay.net
+    secrets:
+      TWITCH_CLIENT_ID:
+        required: true
+      TWITCH_CLIENT_SECRET:
+        required: true
+
+jobs:
+  deployment:
+    name: Deploy Helm Chart
+    runs-on: [self-hosted]
+    environment:
+      name: ${{ inputs.ENVIRONMENT }}
+      url: ${{ format('https://{0}', inputs.URL) }}
+    steps:
+      - name: Install Helm
+        run: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      - uses: actions/checkout@v3
+      - name: Grab Chart Dependencies
+        run: helm dep up helm/django-learn
+      - name: Deploy
+        run: |
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          TAG=$(echo $VERSION | sed -e 's/^v//')
+          helm upgrade --install --wait django-learn --namespace django-learn \
+            --set image.repository=ghcr.io/jslay88/django_learn \
+            --set image.tag=$TAG \
+            --set secret.twitch.clientId=${{ secrets.TWITCH_CLIENT_ID }} \
+            --set secret.twitch.clientSecret=${{ secrets.TWITCH_CLIENT_SECRET }} \
+            -f helm/overrides/ingress.yaml \
+            --set ingress.enabled=true \
+            --set ingress.className=nginx \
+            --set ingress.hosts[0].host=${{ inputs.URL }} \
+            --set ingress.tls[0].secretName=django-learn-tls \
+            --set ingress.tls[0].hosts[0]=${{ inputs.URL }} \
+            --set-string ingress.annotations."acme\.cert-manager\.io/http01-edit-in-place"=true \
+            --set ingress.annotations."cert-manager\.io/cluster-issuer"=letsencrypt \
+            --set postgresql.enabled=true \
+            helm/django-learn

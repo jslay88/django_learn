@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load account %}
+{% load socialaccount %}
+
+{% block content %}
+  {# https://django-allauth.readthedocs.io/en/latest/templates.html#account-tags #}
+  <h4><img src="{{ user.socialaccount_set.first.extra_data.profile_image_url }}" width="24" height="24" /> {% user_display user %}'s Profile</h4>
+  <div>
+    Socials:
+    <ul>
+      {# https://django-allauth.readthedocs.io/en/latest/templates.html#social-account-tags #}
+      {% get_social_accounts user as accounts %}
+      Accounts: {{ accounts }} <br>
+      Twitch Accounts:
+      {% for account in accounts.twitch %}
+        <li>
+          <a href="https://twitch.tv/{{ account.extra_data.display_name }}">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Twitch_icon_2012.svg/1200px-Twitch_icon_2012.svg.png" width="16" height="16" />
+            {# Beware, extra_data has Twitch login email address #}
+            {{ account.extra_data.display_name }}
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+    MBTI: {{ user.profile.mbti }}
+  </div>
+{% endblock %}
