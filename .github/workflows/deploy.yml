@@ -37,6 +37,7 @@ jobs:
           helm upgrade --install --wait django-learn --namespace django-learn \
             --set image.repository=ghcr.io/jslay88/django_learn \
             --set image.tag=$TAG \
+            --set image.pullPolicy=Always \
             --set secret.twitch.clientId=${{ secrets.TWITCH_CLIENT_ID }} \
             --set secret.twitch.clientSecret=${{ secrets.TWITCH_CLIENT_SECRET }} \
             -f helm/overrides/ingress.yaml \
